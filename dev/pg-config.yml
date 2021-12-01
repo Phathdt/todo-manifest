@@ -1,0 +1,9 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: pg-config
+  namespace: dev-todo
+data:
+  POSTGRESQL_USERNAME: postgres
+  POSTGRESQL_PASSWORD: password123
+  POSTGRESQL_DATABASE: todo

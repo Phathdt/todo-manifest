@@ -1,0 +1,55 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-todo-issuer
+  namespace: dev-todo
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-todo-issuer
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: todo-certificate
+  namespace: dev-todo
+spec:
+  secretName: todo-certificate-secret
+  issuerRef:
+    name: letsencrypt-todo-issuer
+  dnsNames:
+    - todo.kanesa.xyz
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: todo-ingress
+  namespace: dev-todo
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    cert-manager.io/issuer: 'letsencrypt-todo-issuer'
+spec:
+  tls:
+    - hosts:
+        - todo.kanesa.xyz
+      secretName: todo-certificate-secret
+  rules:
+    - host: todo.kanesa.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app-svc
+                port:
+                  number: 80
+  ingressClassName: nginx

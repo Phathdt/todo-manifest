@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-deployment
+  namespace: dev-todo
+  labels:
+    app: pg-deployment
+spec:
+  selector:
+    matchLabels:
+      app: pg-deployment
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: pg-deployment
+    spec:
+      containers:
+        - name: pg-deployment
+          image: postgres:14-alpine
+          env:
+            - name: PGDATA
+              value: '/var/lib/postgresql/data/pgdata'
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: pg-config
+                  key: POSTGRESQL_PASSWORD
+          ports:
+            - containerPort: 5432
+              name: pg-deployment
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: fileserver-claim
+      volumes:
+        - name: fileserver-claim
+          persistentVolumeClaim:
+            claimName: fileserver-claim
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-svc
+  namespace: dev-todo
+spec:
+  selector:
+    app: pg-deployment
+  type: ClusterIP
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+    - name: pg-svc
+      protocol: TCP
+      port: 5432
+      targetPort: 5432
