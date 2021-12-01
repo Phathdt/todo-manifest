@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: app-deployment
-          image: phathdt379/express-todo:1.5
+          image: phathdt379/express-todo:1.6
           resources:
             requests:
               cpu: 100m
