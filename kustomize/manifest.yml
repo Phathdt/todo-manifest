@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-svc
+  namespace: dev-todo
+spec:
+  ports:
+  - name: app-svc
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: app-deployment
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: app-deployment
+  name: app-deployment
+  namespace: dev-todo
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: app-deployment
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: app-deployment
+    spec:
+      containers:
+      - env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: app-config
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: DB_PORT
+              name: app-config
+        - name: DB_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGRESQL_USERNAME
+              name: pg-config
+        - name: DB_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGRESQL_PASSWORD
+              name: pg-config
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: POSTGRESQL_DATABASE
+              name: pg-config
+        image: phathdt379/express-todo:1.6
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 5
+        name: app-deployment
+        ports:
+        - containerPort: 8080
+          name: app-deployment
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+      restartPolicy: Always

@@ -77,7 +77,7 @@ metadata:
 spec:
   selector:
     app: app-deployment
-  type: NodePort
+  type: ClusterIP
   sessionAffinity: None
   sessionAffinityConfig:
     clientIP:
